@@ -2,24 +2,20 @@
 聯合報
 the crawl deal with udn's news
 Usage: scrapy crawl udn -o <filename.json>
+
+Set CRAWLED_DAYS to how many days to be crawled from the start date (included)
 """
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 from datetime import datetime
 from datetime import timedelta
 import scrapy
-
-CRAWLED_DAYS = 2
-DAYS_STR = []
-for i in range(CRAWLED_DAYS):
-    day_str = (datetime.now() - timedelta(i)).strftime('%m-%d')
-    DAYS_STR.append(day_str)
+from conf import *
 
 class UdnSpider(scrapy.Spider):
     name = "udn"
 
     def start_requests(self):
-        print(DAYS_STR)
         url = 'https://udn.com/news/breaknews/1/99#breaknews'
         meta = {'iter_time': 1}
         yield scrapy.Request(url, callback=self.parse, meta=meta)
@@ -40,13 +36,11 @@ class UdnSpider(scrapy.Spider):
 
             if date_time == None:
                 continue
-            date_in_range = False
-            for day_str in DAYS_STR:
-                if day_str in date_time:
-                    date_in_range = True
-                    break
-            if not date_in_range:
-                print('break here ' + date_time)
+                
+            date_time = datetime.strptime(date_time + ' 2019', '%m-%d %H:%M %Y')
+            if date_time.date() >= ENDDATE.date():
+                continue
+            if date_time.date() < STARTDATE.date():
                 has_next_page = False
                 break
 

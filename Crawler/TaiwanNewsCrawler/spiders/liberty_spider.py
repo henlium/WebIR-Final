@@ -8,6 +8,8 @@ Usage: scrapy crawl liberty -o <filename.json>
 import time
 import re
 import scrapy
+from datetime import datetime, timedelta
+from conf import *
 
 ROOT_URL = 'http://news.ltn.com.tw'
 CATEGORY_DIC = {
@@ -16,15 +18,13 @@ CATEGORY_DIC = {
     'society': '社會',
     'local': '地方',
     'life': '生活',
-    'opinion': '言論',
+    'opinion': '評論',
     'world': '國際',
     'business': '財經',
-    'entertainment': '娛樂',
+    'entertainment': '影視',
     'consumer': '消費',
-    'supplement': '副刊',
     'sports': '體育'
 }
-
 
 class LibertySpider(scrapy.Spider):
     name = "liberty"
@@ -41,14 +41,15 @@ class LibertySpider(scrapy.Spider):
             'http://news.ltn.com.tw/list/newspaper/business/',
             'http://news.ltn.com.tw/list/newspaper/sports/',
             'http://news.ltn.com.tw/list/newspaper/entertainment/',
-            'http://news.ltn.com.tw/list/newspaper/consumer/',
-            'http://news.ltn.com.tw/list/newspaper/supplement/'
+            'http://news.ltn.com.tw/list/newspaper/consumer/'
         ]
 
-        date = time.strftime('%Y%m%d')
-        for url in urls:
-            target = url + date
-            yield scrapy.Request(target, callback=self.parse_news_list)
+        # date = time.strftime('%Y%m%d')
+        for date in daterange(STARTDATE, ENDDATE):
+            date = date.strftime('%Y%m%d')
+            for url in urls:
+                target = url + date
+                yield scrapy.Request(target, callback=self.parse_news_list)
 
     def parse_news_list(self, response):
         for news_item in response.css('.list li'):
@@ -84,21 +85,35 @@ class LibertySpider(scrapy.Spider):
             title = response.css('h1::text').extract_first()
 
         if category == 'opinion':
+            date = response.css('.writer_time ::text').get()
+            date = datetime.strptime(date, '%Y-%m-%d %H:%M')
             content = get_news_content(response, '.cont h4::text', '.cont p')
         elif category == 'sports':
+            date = response.css('.c_time ::text').get()
+            date = datetime.strptime(date, '%Y/%m/%d %H:%M')
             content = get_news_content(response, '.news_p h4::text',
                                        '.news_p p')
         elif category == 'entertainment':
+            date = response.css('.date ::text').get()
+            date = datetime.strptime(date, '%Y/%m/%d %H:%M')
             content = get_news_content(response, '.news_content h4::text',
                                        '.news_content p')
         else:
+            date = response.css('.viewtime ::text').get()
+            date = datetime.strptime(date, '%Y-%m-%d')
             content = get_news_content(response, '.text h4::text', '.text p')
+
+        if category == None or date == None:
+            print('category None or date None')
+            print(response.url)
+            print(date)
+            print(content)
 
         yield {
             'website': "自由時報",
             'url': response.url,
             'title': title,
-            'date': time.strftime('%Y-%m-%d'),
+            'date': date.strftime('%Y-%m-%d'),
             'content': content,
             'category': CATEGORY_DIC[category]
         }
