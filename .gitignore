@@ -89,5 +89,6 @@ ENV/
 .ropeproject
 .DS_Store
 *.swp
+*.log
 
 setup.py
