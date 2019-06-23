@@ -92,3 +92,4 @@ ENV/
 *.log
 
 setup.py
+.vscode/
