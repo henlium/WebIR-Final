@@ -63,6 +63,11 @@ class NewsDataCollection:
             A list of `NewsData`
         """
         return self.newsList
+    
+    def hasUrl(self, url):
+        if url in self.urlDict:
+            return True
+        return False
 
     def getByUrl(self, url):
         """Get a `NewsData` by URL
