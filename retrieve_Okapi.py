@@ -82,6 +82,7 @@ def getNews(url):
             website = col.website
 
     if not query_news:
+        print(f'Query news not existed.\nURL: {url}')
         return None
 
     # counting query term frequency
@@ -91,6 +92,7 @@ def getNews(url):
     title_cnt = Counter()
     query_words = list(jieba.cut(query_news.content))
     title_cnt.update(query_words)
+    doc_size = len(query_words)
 
     retList = []
     for j in range(len(collections)):
@@ -141,5 +143,8 @@ def getNews(url):
         # sort the document score pair by the score
         sorted_document_scores = sorted(news_scores.items(), key=lambda kv: kv[1], reverse=True)
         targetUrl = sorted_document_scores[0][0]
-        retList.append([col.website, targetUrl, col.getByUrl(targetUrl).title])
+
+        # check by threshold
+        if sorted_document_scores[0][1] / doc_size > 0.7:
+            retList.append([col.website, targetUrl, col.getByUrl(targetUrl).title])
     return retList
